@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
+      return NextResponse.redirect(
+        new URL("/?connect=mail", requestUrl.origin),
+      );
     }
   }
 

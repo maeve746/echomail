@@ -67,7 +67,7 @@ export default function LoginPage() {
         throw error;
       }
 
-      router.push("/");
+      router.push("/?connect=mail");
       router.refresh();
     } catch (error) {
       setIsError(true);

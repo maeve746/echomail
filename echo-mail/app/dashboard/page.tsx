@@ -15,7 +15,8 @@ import { LogoutButton } from "../auth/logout-button";
 
 type DashboardPageProps = {
   searchParams?: Promise<{
-    gmail?: string;
+    l?: string;
+    message?: string;
   }>;
 };
 
@@ -32,7 +33,8 @@ export default async function DashboardPage({
   }
 
   const params = await searchParams;
-  const gmailStatus = params?.gmail;
+  const status = params?.l;
+  const message = params?.message;
   const connection = await getGmailConnection(userId);
   const isConnected = Boolean(connection);
 
@@ -71,10 +73,11 @@ export default async function DashboardPage({
               : "Mail Plus needs Gmail access after login so it can read your inbox, find missed replies, and prepare follow-up suggestions."}
           </p>
 
-          {gmailStatus && (
+          {status && (
             <StatusMessage
               isConnected={isConnected}
-              status={gmailStatus}
+              message={message}
+              status={status}
             />
           )}
 
@@ -118,7 +121,7 @@ export default async function DashboardPage({
 
           <p className="mt-3 text-sm leading-6 text-neutral-500">
             {isConnected
-              ? `Connected${connection?.email ? ` as ${connection.email}` : ""}. Mail Plus can now read Gmail messages for your attention inbox.`
+              ? `Connected as ${connection?.gmail_email}. Mail Plus can now read Gmail messages for your attention inbox.`
               : "Connect Gmail to let Mail Plus scan for emails that need your attention."}
           </p>
 
@@ -152,7 +155,7 @@ async function getGmailConnection(userId: string) {
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("gmail_connections")
-      .select("email, connected_at")
+      .select("gmail_email, created_at, updated_at")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -168,13 +171,15 @@ async function getGmailConnection(userId: string) {
 
 function StatusMessage({
   isConnected,
+  message,
   status,
 }: {
   isConnected: boolean;
+  message?: string;
   status: string;
 }) {
   const success = isConnected && status === "connected";
-  const message = getStatusMessage(status, success);
+  const displayMessage = getStatusMessage(status, success, message);
 
   return (
     <div
@@ -189,25 +194,23 @@ function StatusMessage({
       ) : (
         <AlertCircle className="mt-0.5 size-5 shrink-0" />
       )}
-      <p className="text-sm leading-6">{message}</p>
+      <p className="text-sm leading-6">{displayMessage}</p>
     </div>
   );
 }
 
-function getStatusMessage(status: string, success: boolean) {
+function getStatusMessage(
+  status: string,
+  success: boolean,
+  message?: string,
+) {
   if (success) {
     return "Gmail connected successfully.";
   }
 
-  const messages: Record<string, string> = {
-    access_denied: "Google access was denied. Try connecting Gmail again.",
-    connection_failed:
-      "Gmail connection failed. Check your Google keys, callback URL, encryption key, and database table.",
-    invalid_oauth_state:
-      "The Gmail connection session expired. Try connecting Gmail again.",
-    missing_google_client_id:
-      "Missing GOOGLE_CLIENT_ID. Add it to .env.local before connecting Gmail.",
-  };
+  if (status === "error" && message) {
+    return message;
+  }
 
-  return messages[status] ?? "Gmail is not connected yet.";
+  return "Gmail is not connected yet.";
 }

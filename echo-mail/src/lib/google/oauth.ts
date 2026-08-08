@@ -1,7 +1,4 @@
 export const gmailReadonlyScopes = [
-  "openid",
-  "email",
-  "profile",
   "https://www.googleapis.com/auth/gmail.readonly",
 ];
 
@@ -56,24 +53,28 @@ export async function exchangeGoogleCodeForTokens({
   return tokens;
 }
 
-export function getGoogleEmailFromIdToken(idToken?: string) {
-  if (!idToken) {
-    return null;
+export async function fetchGmailProfile(accessToken: string) {
+  const response = await fetch(
+    "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  const profile = (await response.json()) as {
+    emailAddress?: string;
+    error?: {
+      message?: string;
+    };
+  };
+
+  if (!response.ok || !profile.emailAddress) {
+    throw new Error(
+      profile.error?.message ?? "Unable to fetch Gmail profile.",
+    );
   }
 
-  const [, payload] = idToken.split(".");
-
-  if (!payload) {
-    return null;
-  }
-
-  try {
-    const claims = JSON.parse(
-      Buffer.from(payload, "base64url").toString("utf8"),
-    ) as { email?: string };
-
-    return claims.email ?? null;
-  } catch {
-    return null;
-  }
+  return profile;
 }

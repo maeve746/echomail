@@ -13,13 +13,14 @@ export async function GET() {
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI ??
     `${getAppUrl()}/api/gmail/callback`;
 
-  if (!clientId) {
-    return NextResponse.redirect(
-      new URL("/dashboard?gmail=missing_google_client_id", getAppUrl()),
+  if (!clientId || !clientSecret || !redirectUri) {
+    return redirectToDashboard(
+      "Google OAuth is not configured. Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI.",
     );
   }
 
@@ -43,6 +44,14 @@ export async function GET() {
   });
 
   return response;
+}
+
+function redirectToDashboard(message: string) {
+  const url = new URL("/dashboard", getAppUrl());
+  url.searchParams.set("l", "error");
+  url.searchParams.set("message", message);
+
+  return NextResponse.redirect(url);
 }
 
 function getAppUrl() {

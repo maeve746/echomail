@@ -11,6 +11,9 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import { Suspense } from "react";
+
+import { ConnectMailModal } from "./connect-mail-modal";
 
 const emails = [
   {
@@ -83,6 +86,10 @@ function MailPlusLogo() {
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f8f8f7] text-neutral-950">
+      <Suspense fallback={null}>
+        <ConnectMailModal />
+      </Suspense>
+
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[720px] bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.13),_transparent_48%)]" />
 
       <header className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
