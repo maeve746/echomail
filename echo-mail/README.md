@@ -16,6 +16,43 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Gmail OAuth setup
+
+Add these values to `.env.local`:
+
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/gmail/callback
+
+GMAIL_TOKEN_ENCRYPTION_KEY=base64url_32_byte_key
+```
+
+Generate `GMAIL_TOKEN_ENCRYPTION_KEY` with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+In Supabase SQL editor, run:
+
+```bash
+supabase/gmail_connections.sql
+```
+
+In Google Cloud Console, add this authorized redirect URI:
+
+```bash
+http://localhost:3000/api/gmail/callback
+```
+
+The app requests Gmail read-only access and stores Google access/refresh tokens encrypted in `gmail_connections`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
