@@ -40,8 +40,8 @@ export function ConnectMailModal() {
         </h2>
 
         <p className="mt-3 text-sm leading-6 text-neutral-500">
-          Your Mail Plus account is ready. Connect Gmail so Mail Plus can read
-          your email threads and find conversations that need attention.
+          Your Mail Plus account is ready. Connect Gmail to grant mail access
+          and sync your inbox into Mail Plus.
         </p>
 
         <div className="mt-6 flex flex-col gap-3">

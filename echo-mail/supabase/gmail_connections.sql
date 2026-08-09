@@ -65,3 +65,61 @@ create trigger set_gmail_connections_updated_at
   before update on public.gmail_connections
   for each row
   execute function public.set_updated_at();
+
+create table if not exists public.gmail_messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  gmail_message_id text not null,
+  gmail_thread_id text not null,
+  label_ids text[] not null default '{}',
+  snippet text,
+  subject text,
+  from_email text,
+  to_email text,
+  received_at timestamptz,
+  payload jsonb,
+  raw_message jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists gmail_messages_user_message_key
+  on public.gmail_messages(user_id, gmail_message_id);
+
+create index if not exists gmail_messages_user_received_at_idx
+  on public.gmail_messages(user_id, received_at desc);
+
+alter table public.gmail_messages enable row level security;
+
+drop policy if exists "Users can read their own Gmail messages"
+  on public.gmail_messages;
+
+create policy "Users can read their own Gmail messages"
+  on public.gmail_messages
+  for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can create their own Gmail messages"
+  on public.gmail_messages;
+
+create policy "Users can create their own Gmail messages"
+  on public.gmail_messages
+  for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own Gmail messages"
+  on public.gmail_messages;
+
+create policy "Users can update their own Gmail messages"
+  on public.gmail_messages
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop trigger if exists set_gmail_messages_updated_at
+  on public.gmail_messages;
+
+create trigger set_gmail_messages_updated_at
+  before update on public.gmail_messages
+  for each row
+  execute function public.set_updated_at();

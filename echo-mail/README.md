@@ -51,7 +51,7 @@ In Google Cloud Console, add this authorized redirect URI:
 http://localhost:3000/api/gmail/callback
 ```
 
-The app requests Gmail read-only access and stores Google access/refresh tokens encrypted in `gmail_connections`.
+The app requests full Gmail OAuth access, stores Google access/refresh tokens encrypted in `gmail_connections`, and syncs INBOX messages into `gmail_messages`.
 
 The Google client secret, Supabase secret key, encrypted access token, and encrypted refresh token are only used in server routes.
 

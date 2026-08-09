@@ -5,6 +5,7 @@ import {
   exchangeGoogleCodeForTokens,
   fetchGmailProfile,
 } from "@/lib/google/oauth";
+import { syncGmailInbox } from "@/lib/google/gmail";
 import { encryptSecret } from "@/lib/security/encryption";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -36,6 +37,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user?.email) {
+      return redirectToDashboard(
+        requestUrl,
+        "Your login session could not be verified. Sign in again before connecting Gmail.",
+      );
+    }
+
     const redirectUri =
       process.env.GOOGLE_REDIRECT_URI ??
       `${getAppUrl(requestUrl.origin)}/api/gmail/callback`;
@@ -44,6 +57,14 @@ export async function GET(request: NextRequest) {
       ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
       : null;
     const profile = await fetchGmailProfile(tokens.access_token);
+
+    if (!emailsMatch(user.email, profile.emailAddress)) {
+      return redirectToDashboard(
+        requestUrl,
+        `Gmail connection failed. You signed in as ${user.email}, but selected ${profile.emailAddress}. Use the same email account to connect Gmail.`,
+      );
+    }
+
     const admin = createAdminClient();
 
     const { error: upsertError } = await admin
@@ -63,8 +84,17 @@ export async function GET(request: NextRequest) {
       throw upsertError;
     }
 
+    const { syncedCount } = await syncGmailInbox({
+      accessToken: tokens.access_token,
+      admin,
+      userId,
+    });
+
     const response = NextResponse.redirect(
-      new URL("/dashboard?l=connected", requestUrl.origin),
+      new URL(
+        `/dashboard?l=connected&synced=${syncedCount}`,
+        requestUrl.origin,
+      ),
     );
     response.cookies.delete("gmail_oauth_state");
 
@@ -97,4 +127,8 @@ function getOAuthErrorMessage(error: string) {
   }
 
   return "Google OAuth returned an error. Try connecting Gmail again.";
+}
+
+function emailsMatch(firstEmail: string, secondEmail: string) {
+  return firstEmail.trim().toLowerCase() === secondEmail.trim().toLowerCase();
 }

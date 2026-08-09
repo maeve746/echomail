@@ -1,5 +1,5 @@
 export const gmailReadonlyScopes = [
-  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://mail.google.com/",
 ];
 
 export type GoogleTokenResponse = {
@@ -53,7 +53,9 @@ export async function exchangeGoogleCodeForTokens({
   return tokens;
 }
 
-export async function fetchGmailProfile(accessToken: string) {
+export async function fetchGmailProfile(
+  accessToken: string,
+): Promise<{ emailAddress: string }> {
   const response = await fetch(
     "https://gmail.googleapis.com/gmail/v1/users/me/profile",
     {
@@ -76,5 +78,7 @@ export async function fetchGmailProfile(accessToken: string) {
     );
   }
 
-  return profile;
+  return {
+    emailAddress: profile.emailAddress,
+  };
 }

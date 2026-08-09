@@ -17,6 +17,7 @@ type DashboardPageProps = {
   searchParams?: Promise<{
     l?: string;
     message?: string;
+    synced?: string;
   }>;
 };
 
@@ -35,6 +36,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const status = params?.l;
   const message = params?.message;
+  const synced = params?.synced;
   const connection = await getGmailConnection(userId);
   const isConnected = Boolean(connection);
 
@@ -78,6 +80,7 @@ export default async function DashboardPage({
               isConnected={isConnected}
               message={message}
               status={status}
+              synced={synced}
             />
           )}
 
@@ -173,13 +176,15 @@ function StatusMessage({
   isConnected,
   message,
   status,
+  synced,
 }: {
   isConnected: boolean;
   message?: string;
   status: string;
+  synced?: string;
 }) {
   const success = isConnected && status === "connected";
-  const displayMessage = getStatusMessage(status, success, message);
+  const displayMessage = getStatusMessage(status, success, message, synced);
 
   return (
     <div
@@ -203,9 +208,12 @@ function getStatusMessage(
   status: string,
   success: boolean,
   message?: string,
+  synced?: string,
 ) {
   if (success) {
-    return "Gmail connected successfully.";
+    return synced
+      ? `Gmail connected successfully. Synced ${synced} inbox messages.`
+      : "Gmail connected successfully.";
   }
 
   if (status === "error" && message) {
